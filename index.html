@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+
+
+    <div style="position: fixed;left:5%;bottom: 5%;right: 5%">
+        <div id="overflow" style="overflow-y: auto;height: 600px">
+            <ul></ul>
+        </div>
+        <div style="margin-top: 10px">
+    <form>
+        <input type="text">
+        <button>发送</button>
+    </form>
+        </div>
+    <hr>
+
+    <input type="file" id="picture">
+    <button onclick="sendImg()">发送图片</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const form = document.querySelector('form');
+        const input = document.querySelector('input');
+        const ul = document.querySelector('ul');
+        message = document.getElementById('overflow');
+
+
+        form.addEventListener('submit',e=>{
+            e.preventDefault();
+            if(input.value){
+                socket.emit('chat message',input.value);
+                input.value = '';
+            }
+        });
+        socket.on('chat message',msg=>{
+            const li = document.createElement('li');
+            const hr = document.createElement('hr');
+            li.textContent = msg;
+            ul.appendChild(li);
+            ul.appendChild(hr);
+            message.scrollTop = message.scrollHeight;
+
+        })
+        socket.on('chat image',data=>{
+            let li = document.createElement('li');
+            li.innerHTML = `<div><img style="height: auto;width: 100%"  src="${data.img}" /></div>`;
+            ul.appendChild(li);
+            message.scrollTop = message.scrollHeight;
+        })
+
+        let sendImg = () => {
+            // this.e.preventDefault();
+
+            let input = document.getElementById('picture');
+            let file = input.files[0];       //得到该图片
+            let reader = new FileReader();      //创建一个FileReader对象，进行下一步的操作
+            reader.readAsDataURL(file);              //通过readAsDataURL读取图片
+
+            reader.onload = function () {            //读取完毕会自动触发，读取结果保存在result中
+                let data = {img: this.result};
+                socket.emit('chat image', data);
+            }
+        }
+    </script>
+</body>
+</html>
